@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { AuthProvider, useAuth } from './components/Auth/AuthProvider';
 import Sidebar from './components/Layout/Sidebar';
 import Header from './components/Layout/Header';
 import Dashboard from './components/Dashboard/Dashboard';
@@ -6,9 +7,13 @@ import SampleDiscovery from './components/SampleDiscovery/SampleDiscovery';
 import ClearanceManagement from './components/ClearanceManagement/ClearanceManagement';
 import Analytics from './components/Analytics/Analytics';
 import MarketValuation from './components/MarketValuation/MarketValuation';
+import LoginForm from './components/Auth/LoginForm';
+import RegisterForm from './components/Auth/RegisterForm';
 
-function App() {
+const AppContent: React.FC = () => {
   const [activeSection, setActiveSection] = useState('dashboard');
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const { isAuthenticated, isLoading } = useAuth();
 
   const renderContent = () => {
     switch (activeSection) {
@@ -45,6 +50,25 @@ function App() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-dark-bg flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-primary mx-auto mb-4"></div>
+          <p className="text-dark-text-secondary">Loading SampleSecure...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return authMode === 'login' ? (
+      <LoginForm onToggleMode={() => setAuthMode('register')} />
+    ) : (
+      <RegisterForm onToggleMode={() => setAuthMode('login')} />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-dark-bg">
       <div className="flex h-screen">
@@ -57,6 +81,14 @@ function App() {
         </div>
       </div>
     </div>
+  );
+};
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 

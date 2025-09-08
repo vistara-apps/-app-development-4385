@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  # Frontend (SampleSecure React App)
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_BASE_URL=http://localhost:3001/api
+      - VITE_APP_ENV=development
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - samplesecure-network
+
+  # Backend API (Node.js/Express - placeholder)
+  backend:
+    image: node:18-alpine
+    ports:
+      - "3001:3001"
+    working_dir: /app
+    command: sh -c "echo 'Backend API placeholder - implement your backend here' && sleep infinity"
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - DATABASE_URL=postgresql://user:password@postgres:5432/samplesecure
+    networks:
+      - samplesecure-network
+
+  # Database (PostgreSQL)
+  postgres:
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=samplesecure
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - samplesecure-network
+
+  # Redis (for caching and sessions)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - samplesecure-network
+
+  # Nginx (reverse proxy for production)
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - samplesecure-network
+    profiles:
+      - production
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  samplesecure-network:
+    driver: bridge
